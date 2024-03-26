@@ -5,17 +5,20 @@ from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
 # Import data (Make sure to parse dates. Consider setting index column to 'date'.)
-df = None
+df = pd.read_csv('fcc-forum-pageviews.csv', index_col=0, parse_dates=True)
 
 # Clean data
-df = None
+df = df[(df['value'] > df['value'].quantile(0.025))&(df['value'] < df['value'].quantile(0.975))]
 
 
 def draw_line_plot():
     # Draw line plot
 
-
-
+    fig, ax = plt.subplots(figsize=(16,6))
+    ax.set_title('Daily freeCodeCamp Forum Page Views 5/2016-12/2019')
+    sns.lineplot(data=df, x='date', y='value', ax = ax)
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Page Views')
 
 
     # Save image and return fig (don't change this part)
@@ -24,13 +27,18 @@ def draw_line_plot():
 
 def draw_bar_plot():
     # Copy and modify data for monthly bar plot
-    df_bar = None
+    df_bar = df.copy()
+    df_bar = df_bar.resample('M').mean()
+    df_bar.index = df_bar.index.to_period('M')
+    df_bar['year'] = df_bar.index.year
+    df_bar['Months'] = df_bar.index.month
 
     # Draw bar plot
 
-
-
-
+    fig, ax = plt.subplots(figsize=(10,10))
+    sns.barplot(data=df_bar, x='year', y='value', hue='Months', ax = ax, palette = 'tab10')
+    ax.set_xlabel('Years')
+    ax.set_ylabel('Average Page Views')
 
     # Save image and return fig (don't change this part)
     fig.savefig('bar_plot.png')
@@ -42,12 +50,25 @@ def draw_box_plot():
     df_box.reset_index(inplace=True)
     df_box['year'] = [d.year for d in df_box.date]
     df_box['month'] = [d.strftime('%b') for d in df_box.date]
-
+    
     # Draw box plots (using Seaborn)
-
-
-
-
+    
+    fig, (ax1,ax2) = plt.subplots(1,2, figsize=(16,6))
+    
+    sns.boxplot(data=df_box, x='year', y='value', hue='year', ax=ax1, \
+                fliersize=1, palette='tab10', legend=False, gap=0.2)
+    
+    ax1.set_title('Year-wise Box Plot (Trend)')
+    ax1.set_xlabel('Year')
+    ax1.set_ylabel('Page Views')
+    
+    sns.boxplot(data=df_box, x='month', y='value', hue='month', ax=ax2, \
+                fliersize=1, palette='pastel', legend=False, gap=0.2,\
+                order=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'])
+    
+    ax2.set_title('Month-wise Box Plot (Seasonality)')
+    ax2.set_xlabel('Month')
+    ax2.set_ylabel('Page Views')
 
     # Save image and return fig (don't change this part)
     fig.savefig('box_plot.png')
